@@ -4,10 +4,22 @@
 
 [#BuiltWithMonoGame](http://www.monogame.net) and [.NET Core](https://dotnet.microsoft.com)
 
-## Descripción
-Proyecto plantilla para el trabajo práctico cero de la asignatura electiva [Técnicas de Gráficos por Computadora](http://tgc-utn.github.io/) (TGC) en la carrera de Ingeniería en Sistemas de Información. Universidad Tecnológica Nacional, Facultad Regional Buenos Aires (UTN-FRBA).
+# Descripción
+Trabajo práctico cero de la asignatura electiva [Técnicas de Gráficos por Computadora](http://tgc-utn.github.io/) (TGC)
 
-## Requisitos
+## Consigna
+* Cargar el modelo del auto y renderizarlo
+* Implementar movimientos para el auto
+  * <kbd>w</kbd> y <kbd>s</kbd> para acelerar y desacelerar
+  * <kbd>a</kbd> y <kbd>d</kbd> para girar el auto
+
+Bonus:
+* Movimiento con aceleracion y velocidad por separado
+* <kbd>espacio</kbd> para saltar
+
+
+
+## Requisitos tecnicos
 * [.NET Core SDK](https://docs.microsoft.com/dotnet/core/install/sdk)
 * El IDE que prefieran:
   * [Visual Studio Code](https://code.visualstudio.com) y [HLSL extension](https://marketplace.visualstudio.com/items?itemName=TimGJones.hlsltools)
@@ -29,3 +41,4 @@ Más información sobre [.NET Core CLI Tools telemetry](https://aka.ms/dotnet-cl
 Afuera del mundo Windows, vas a necesitar la ayudar de [Wine](https://www.winehq.org) para los shaders, por lo menos por [ahora](https://github.com/MonoGame/MonoGame/issues/2167).
 
 Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com), con lo cual antes de clonar el repositorio les conviene tenerlo instalado así es automático el pull o si ya lo tienen pueden hacer ```git lfs pull```.
+
