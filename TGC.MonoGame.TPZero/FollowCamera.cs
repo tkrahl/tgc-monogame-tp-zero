@@ -6,7 +6,7 @@ using System.Text;
 namespace TGC.MonoGame.TP
 {
     /// <summary>
-    /// A Camera that follows objects
+    /// Una camara que sigue objetos
     /// </summary>
     class FollowCamera
     {
@@ -27,7 +27,7 @@ namespace TGC.MonoGame.TP
         private Vector3 PastRightVector { get; set; } = Vector3.Right;
 
         /// <summary>
-        /// Creates a FollowCamera to follow a specific World matrix
+        /// Crea una FollowCamera que sigue a una matriz de mundo
         /// </summary>
         /// <param name="aspectRatio"></param>
         public FollowCamera(float aspectRatio)
@@ -36,77 +36,76 @@ namespace TGC.MonoGame.TP
             // Projection = Matrix.CreateOrthographic(screenWidth, screenHeight, 0.01f, 10000f);
 
             // Perspective camera
-            // Use 60° as FOV, the aspect ratio, set 0.1 as near plane and 100000 (a lot) as a far plane distance
+            // Uso 60° como FOV, aspect ratio, pongo las distancias a near plane y far plane en 0.1 y 100000 (mucho) respectivamente
             Projection = Matrix.CreatePerspectiveFieldOfView(MathF.PI / 3f, aspectRatio, 0.1f, 100000f);
         }
 
         /// <summary>
-        /// Updates the Camera using an updated World matrix to follow
+        /// Actualiza la Camara usando una matriz de mundo actualizada para seguirla
         /// </summary>
         /// <param name="gameTime">The Game Time to calculate framerate-independent movement</param>
         /// <param name="followedWorld">The World matrix to follow</param>
         public void Update(GameTime gameTime, Matrix followedWorld)
         {
-            // Extract the Elapsed Time
+            // Obtengo el tiempo
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-            // Get the position of the followed world matrix
+            
+            // Obtengo la posicion de la matriz de mundo que estoy siguiendo
             var followedPosition = followedWorld.Translation;
 
-            // Get the Right vector from the followed world matrix
+            // Obtengo el vector Derecha de la matriz de mundo que estoy siguiendo
             var followedRight = followedWorld.Right;
 
-            // If the dot product of the past right vector
-            // and the current right vector is greater than a threshold,
-            // move the Interpolator variable (from 0 to 1) closer to one
+            // Si el producto escalar entre el vector Derecha anterior
+            // y el actual es mas grande que un limite,
+            // muevo el Interpolator (desde 0 a 1) mas cerca de 1
             if (Vector3.Dot(followedRight, PastRightVector) > AngleThreshold)
             {
-                // Add an increment to Interpolator
+                // Incremento el Interpolator
                 RightVectorInterpolator += elapsedTime * AngleFollowSpeed;
 
-                // Clamp Interpolator to 1 maximum
+                // No permito que Interpolator pase de 1
                 RightVectorInterpolator = MathF.Min(RightVectorInterpolator, 1f);
 
-                // Calculate the right vector from the interpolation
-                // This moves the Right vector to match the followed Right vector
-                // In this case use a x^2 curve to make it smoother
-                // Interpolator will eventually become 1
+                // Calculo el vector Derecha a partir de la interpolacion
+                // Esto mueve el vector Derecha para igualar al vector Derecha que sigo
+                // En este caso uso la curva x^2 para hacerlo mas suave
+                // Interpolator se convertira en 1 eventualmente
                 CurrentRightVector = Vector3.Lerp(CurrentRightVector, followedRight, RightVectorInterpolator * RightVectorInterpolator);
             }
             else
-                // If the angle does not pass the threshold, set it back to zero
+                // Si el angulo no pasa de cierto limite, lo pongo de nuevo en cero
                 RightVectorInterpolator = 0f;
 
-            // Store the Right vector to use it the next iteration
+            // Guardo el vector Derecha para usar en la siguiente iteracion
             PastRightVector = followedRight;
             
-            // Calculate the camera position
-            // Take the followed position, add an offset in the Y and Followed Right axis
+            // Calculo la posicion del a camara
+            // tomo la posicion que estoy siguiendo, agrego un offset en los ejes Y y Derecha
             var offsetedPosition = followedPosition 
                 + CurrentRightVector * AxisDistanceToTarget
                 + Vector3.Up * AxisDistanceToTarget;
 
-            // Calculate the updated Up vector
-            // Note that the default Up vector (0, 1, 0) can't be used as 
-            // it is not correct, calculate the correct up vector instead
-            // (by using this cross-product trick)
+            // Calculo el vector Arriba actualizado
+            // Nota: No se puede usar el vector Arriba por defecto (0, 1, 0)
+            // Como no es correcto, se calcula con este truco de producto vectorial
 
-            // Calculate the Forward vector by subtracting the destination to the origin
-            // Then normalizing it (expensive!)
-            // (This operation needs normalized vectors)
+            // Calcular el vector Adelante haciendo la resta entre el destino y el origen
+            // y luego normalizandolo (Esta operacion es cara!)
+            // (La siguiente operacion necesita vectores normalizados)
             var forward = (followedPosition - offsetedPosition);
             forward.Normalize();
 
-            // Get the right vector by assuming the camera has the Up vector pointing upwards
-            // and it is not rotated in the X axis (roll)
+            // Obtengo el vector Derecha asumiendo que la camara tiene el vector Arriba apuntando hacia arriba
+            // y no esta rotada en el eje X (Roll)
             var right = Vector3.Cross(forward, Vector3.Up);
 
-            // Once the correct Camera Right vector is calculated, get the correct Camera Up vector by using 
-            // another cross product
+            // Una vez que tengo la correcta direccion Derecha, obtengo la correcta direccion Arriba usando
+            // otro producto vectorial
             var cameraCorrectUp = Vector3.Cross(right, forward);
 
-            // Calculate the View matrix by using the Camera Position, the Position the Camera is looking at,
-            // and the Camera Up vector
+            // Calculo la matriz de Vista de la camara usando la Posicion, La Posicion a donde esta mirando,
+            // y su vector Arriba
             View = Matrix.CreateLookAt(offsetedPosition, followedPosition, cameraCorrectUp);
         }
     }
