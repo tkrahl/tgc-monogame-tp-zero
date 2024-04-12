@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -23,9 +24,10 @@ namespace TGC.MonoGame.TP
         private CityScene City { get; set; }
         private Model CarModel { get; set; }
         private Matrix CarWorld { get; set; }
+        private Matrix CarRotation { get; set; }
+        private Vector3 CarPosition { get; set; }
         private FollowCamera FollowCamera { get; set; }
-
-
+        
         /// <summary>
         ///     Constructor del juego.
         /// </summary>
@@ -65,6 +67,9 @@ namespace TGC.MonoGame.TP
             // Configuro la matriz de mundo del auto.
             CarWorld = Matrix.Identity;
 
+            CarPosition = Vector3.UnitX * 30f;
+            CarRotation = Matrix.Identity;
+
             base.Initialize();
         }
 
@@ -78,6 +83,7 @@ namespace TGC.MonoGame.TP
             City = new CityScene(Content);
 
             // La carga de contenido debe ser realizada aca.
+            CarModel = Content.Load<Model>(ContentFolder3D + "scene/car");
 
             base.LoadContent();
         }
@@ -88,8 +94,29 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Update(GameTime gameTime)
         {
+            float elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
             // Caputo el estado del teclado.
             var keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.W))
+            {
+                CarPosition += Vector3.Transform(Vector3.Forward, CarRotation) * 10f;
+            }
+
+            if (keyboardState.IsKeyDown(Keys.S))
+            {
+                CarPosition += Vector3.Transform(Vector3.Backward, CarRotation) * 10f;
+            }
+
+            if (keyboardState.IsKeyDown(Keys.A))
+            {
+                CarRotation *= Matrix.CreateRotationY(elapsedTime);
+            }
+
+            if (keyboardState.IsKeyDown(Keys.D))
+            {
+                CarRotation *= Matrix.CreateRotationY(-elapsedTime);
+            }
+
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
                 // Salgo del juego.
@@ -97,7 +124,7 @@ namespace TGC.MonoGame.TP
             }
 
             // La logica debe ir aca.
-
+            CarWorld = CarRotation * Matrix.CreateTranslation(CarPosition);
             // Actualizo la camara, enviandole la matriz de mundo del auto.
             FollowCamera.Update(gameTime, CarWorld);
 
@@ -118,6 +145,7 @@ namespace TGC.MonoGame.TP
             City.Draw(gameTime, FollowCamera.View, FollowCamera.Projection);
 
             // El dibujo del auto debe ir aca.
+            CarModel.Draw(CarWorld, FollowCamera.View, FollowCamera.Projection);
 
             base.Draw(gameTime);
         }
