@@ -24,10 +24,21 @@ namespace TGC.MonoGame.TP
         private CityScene City { get; set; }
         private Model CarModel { get; set; }
         private Matrix CarWorld { get; set; }
-        private Matrix CarRotation { get; set; }
+        private float CarRotation { get; set; }
         private Vector3 CarPosition { get; set; }
+        private Vector3 CarVelocity { get; set; }
         private FollowCamera FollowCamera { get; set; }
-        
+        private bool OnGround { get; set; }
+        private static bool Compare(float a, float b)
+        {
+            return MathF.Abs(a - b) < float.Epsilon;
+        }
+
+        private const float RotationSpeed = 3f;
+        private const float ForwardSpeed = 500f;
+        private const float HorizontalAcceleration = 25000f;
+        private const float Friction = 0.5f;
+        private const float Gravity = 350f;
         /// <summary>
         ///     Constructor del juego.
         /// </summary>
@@ -66,9 +77,7 @@ namespace TGC.MonoGame.TP
 
             // Configuro la matriz de mundo del auto.
             CarWorld = Matrix.Identity;
-
-            CarPosition = Vector3.UnitX * 30f;
-            CarRotation = Matrix.Identity;
+            OnGround = false;
 
             base.Initialize();
         }
@@ -94,37 +103,48 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Update(GameTime gameTime)
         {
-            float elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            Vector3 accel = Vector3.Zero;
+
             // Caputo el estado del teclado.
             var keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.W))
-            {
-                CarPosition += Vector3.Transform(Vector3.Forward, CarRotation) * 10f;
-            }
-
-            if (keyboardState.IsKeyDown(Keys.S))
-            {
-                CarPosition += Vector3.Transform(Vector3.Backward, CarRotation) * 10f;
-            }
-
-            if (keyboardState.IsKeyDown(Keys.A))
-            {
-                CarRotation *= Matrix.CreateRotationY(elapsedTime);
-            }
-
-            if (keyboardState.IsKeyDown(Keys.D))
-            {
-                CarRotation *= Matrix.CreateRotationY(-elapsedTime);
-            }
 
             if (keyboardState.IsKeyDown(Keys.Escape))
-            {
                 // Salgo del juego.
                 Exit();
+
+            if (keyboardState.IsKeyDown(Keys.A))
+                CarRotation += elapsedTime * RotationSpeed;
+            else if (keyboardState.IsKeyDown(Keys.D))
+                CarRotation -= elapsedTime * RotationSpeed;
+
+            if (keyboardState.IsKeyDown(Keys.W))
+                //CarPosition += CarWorld.Forward * elapsedTime * ForwardSpeed; // Sin accel
+                accel += CarWorld.Forward * HorizontalAcceleration; // con accel
+            else if (keyboardState.IsKeyDown(Keys.S))
+                //CarPosition -= CarWorld.Forward * elapsedTime * ForwardSpeed; // Sin accel
+                accel -= CarWorld.Forward * HorizontalAcceleration; // Con accel
+
+            if (keyboardState.IsKeyDown(Keys.Space) && (OnGround == true)) {
+                CarVelocity += Vector3.Up * 300f;
+                OnGround = false;
             }
 
+            CarVelocity = new Vector3(CarVelocity.X * Friction, CarVelocity.Y - Gravity * elapsedTime, CarVelocity.Z * Friction);
+
+            CarVelocity += accel * elapsedTime;
+            CarPosition += CarVelocity * elapsedTime;
+            var minimumFloor = MathHelper.Max(0f, CarPosition.Y);
+            CarPosition = new Vector3(CarPosition.X, minimumFloor, CarPosition.Z);
+
+            if (Compare(CarPosition.Y, 0.0f) && (OnGround == false)) {
+                CarVelocity = new Vector3(CarVelocity.X, 0f, CarVelocity.Z);
+                OnGround = true;
+            }
+                
             // La logica debe ir aca.
-            CarWorld = CarRotation * Matrix.CreateTranslation(CarPosition);
+            CarWorld = Matrix.CreateRotationY(CarRotation) * Matrix.CreateTranslation(CarPosition);
+
             // Actualizo la camara, enviandole la matriz de mundo del auto.
             FollowCamera.Update(gameTime, CarWorld);
 
